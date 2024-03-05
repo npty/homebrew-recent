@@ -18,21 +18,32 @@ use prettytable::Table;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
-    #[arg(short, long, default_value_t = 1)]
+    #[arg(short, long, default_value_t = 10)]
     pub size: u8,
 
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short, long, default_value_t = true)]
     pub display_date: bool,
 
     #[arg(short, long, default_value_t = false)]
     pub vs_code: bool,
+
+    /// The relative path to the home directory. Default is current directory.
+    #[arg(short, long, default_value = "")]
+    pub working_directory: String,
 }
 
 const MAX_DEPTH: usize = 5;
 
 fn main() {
     let args = Args::parse();
-    let path = dirs::home_dir().unwrap().join("workspace");
+
+    let path;
+
+    if args.working_directory != "" {
+        path = dirs::home_dir().unwrap().join(&args.working_directory);
+    } else {
+        path = std::env::current_dir().unwrap();
+    }
 
     let mut data: Vec<FileInfo> = fs::read_dir(&path)
         .unwrap()
@@ -53,7 +64,7 @@ fn main() {
 
     let mut table = Table::new();
     if args.display_date {
-        table.set_titles(row!["Name", "Modified"]);
+        table.set_titles(row![Fb => "Name", "Modified"]);
     } else {
         table.set_titles(row!["Name"]);
     }
